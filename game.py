@@ -13,11 +13,12 @@ Controls:
 - ESC: quit current puzzle or close the game from the main view
 
 Requirements:
-- Python 3
+- Python 3.8+
 - pygame 2.x  (install with: pip install pygame)
 """
 
 import sys
+from typing import List, Dict, Optional
 
 import pygame
 
@@ -56,7 +57,7 @@ class Player:
         self.rect = pygame.Rect(x, y, PLAYER_SIZE, PLAYER_SIZE)
         self.color = (180, 240, 255)
 
-    def handle_input(self, keys: pygame.key.ScancodeWrapper) -> None:
+    def handle_input(self, keys) -> None:
         dx = dy = 0
         if keys[pygame.K_a] or keys[pygame.K_LEFT]:
             dx -= PLAYER_SPEED
@@ -129,7 +130,7 @@ class RoomHub:
         label_pos = label.get_rect(center=self.power_console.center)
         surface.blit(label, label_pos)
 
-    def check_interaction(self, player: Player) -> str | None:
+    def check_interaction(self, player: Player) -> Optional[str]:
         """
         Return an action string if the player is close enough to something.
         Possible values: 'botany', 'server', 'engineering', 'power_console', or None.
@@ -158,10 +159,10 @@ class PowerGridPuzzle:
 
     def __init__(self, font: pygame.font.Font) -> None:
         self.font = font
-        self.buttons: dict[str, pygame.Rect] = {}
-        self.sequence: list[str] = []
+        self.buttons: Dict[str, pygame.Rect] = {}
+        self.sequence: List[str] = []
         self.resolved: bool = False
-        self.failed_message: str | None = None
+        self.failed_message: Optional[str] = None
 
         # Layout buttons at the bottom of the screen
         button_width = 120
@@ -257,7 +258,7 @@ class ServerRoomPuzzle:
         self.game_state = game_state
         self.input_text: str = ""
         self.solved: bool = False
-        self.message: str | None = None
+        self.message: Optional[str] = None
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type != pygame.KEYDOWN or self.solved:
@@ -316,9 +317,9 @@ class BotanyRoom:
     def __init__(self, font: pygame.font.Font, game_state: GameState) -> None:
         self.font = font
         self.game_state = game_state
-        self.tanks: dict[str, pygame.Rect] = {}
+        self.tanks: Dict[str, pygame.Rect] = {}
         self.solved: bool = False
-        self.message: str | None = None
+        self.message: Optional[str] = None
 
         width = 120
         height = 160
@@ -391,8 +392,8 @@ class EngineeringRoom:
     def __init__(self, font: pygame.font.Font, game_state: GameState) -> None:
         self.font = font
         self.game_state = game_state
-        self.toggles: list[bool] = [False, False, False]
-        self.rects: list[pygame.Rect] = []
+        self.toggles: List[bool] = [False, False, False]
+        self.rects: List[pygame.Rect] = []
         self.solved: bool = False
 
         width = 80
@@ -544,4 +545,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
