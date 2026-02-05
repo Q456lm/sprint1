@@ -31,10 +31,10 @@ Steps
 - Open a terminal or command prompt.
 
 - Navigate to the folder containing the project files (the folder with game.py).
-- Example: cd path/to/sprint1
+  Example: cd path/to/sprint1
 
 - Run the game by typing: python game.py
-- (On macOS/Linux, use: python3 game.py)
+  (On macOS/Linux, use: python3 game.py)
 
 - A window titled “Echo of Terminal 7 — Pygame Prototype” should open.
 #### Prerequisites
