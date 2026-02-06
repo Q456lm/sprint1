@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 """
-Echo of Terminal 7 — Complete Edition.
+Echo of Terminal 7 — The Herd Edition.
 Features:
-- Neon aesthetics, CRT effects, Smooth Physics, Particles.
-- Boss Battle Ending with Weapon mechanics.
-- Restored Botany Room atmospheric spores.
+- Intro Story Screen.
+- Neon aesthetics, CRT effects, Smooth Physics.
+- ENDING: "The Herd" Swarm Battle (Multiple Enemies).
+- Fully implemented Puzzles.
 """
 
 import sys
@@ -25,7 +26,7 @@ FPS = 60
 PLAYER_ACCEL = 0.8
 PLAYER_FRICTION = 0.85
 MAX_SPEED = 6
-PROJECTILE_SPEED = 12
+PROJECTILE_SPEED = 14
 
 # Colors (Neon Palette)
 C_BG_DEEP = (5, 5, 12)
@@ -34,8 +35,8 @@ C_NEON_CYAN = (0, 255, 240)
 C_NEON_BLUE = (0, 100, 255)
 C_NEON_GREEN = (50, 255, 50)
 C_NEON_RED = (255, 50, 50)
+C_BLOOD_RED = (130, 0, 0)
 C_NEON_YELLOW = (255, 220, 0)
-C_NEON_PURPLE = (200, 50, 255)
 C_WHITE = (220, 240, 255)
 C_SHADOW = (0, 0, 0)
 
@@ -76,7 +77,7 @@ class Particle:
         self.vy = random.uniform(-speed, speed)
         self.life = int(random.randint(20, 60) * life_scale)
         self.color = color
-        self.size = random.randint(1, 3)
+        self.size = random.randint(1, 4)
 
     def update(self):
         self.x += self.vx
@@ -107,6 +108,73 @@ class ParticleSystem:
                 self.particles.remove(p)
 
 # ------------------------------------------------------------
+# Intro / Lore Screen
+# ------------------------------------------------------------
+
+class IntroScreen:
+    def __init__(self, font: pygame.font.Font):
+        self.font = font
+        self.lines = [
+            "ESTABLISHING CONNECTION...",
+            "YEAR: 2149 // SECTOR: DEEP VOID",
+            "LOCATION: TERMINAL 7",
+            "",
+            "Three weeks ago, the Slip-Drive stability test failed.",
+            "The radiation didn't kill the crew. It changed them.",
+            "Project 'THE HERD' has breached containment.",
+            "The station is silent. The air is toxic.",
+            "",
+            "MISSION OBJECTIVES:",
+            "1. RESTORE POWER GRID",
+            "2. DECRYPT SERVER LOGS",
+            "3. STABILIZE DRIVE COUPLERS",
+            "4. ELIMINATE THE HERD",
+            "",
+            "[ PRESS ANY KEY TO INITIATE SEQUENCE ]"
+        ]
+        self.current_line_idx = 0
+        self.char_idx = 0
+        self.timer = 0
+        self.speed = 2
+        self.finished = False
+
+    def update(self):
+        if not self.finished:
+            self.timer += 1
+            if self.timer >= self.speed:
+                self.timer = 0
+                self.char_idx += 1
+                current_text = self.lines[self.current_line_idx]
+                if self.char_idx > len(current_text):
+                    self.current_line_idx += 1
+                    self.char_idx = 0
+                    if self.current_line_idx >= len(self.lines):
+                        self.finished = True
+
+    def draw(self, surface: pygame.Surface):
+        surface.fill((0, 5, 10))
+        y = 60
+        for i in range(min(self.current_line_idx + 1, len(self.lines))):
+            line = self.lines[i]
+            if i == self.current_line_idx and not self.finished:
+                draw_text = line[:self.char_idx]
+                if (pygame.time.get_ticks() // 200) % 2 == 0:
+                    draw_text += "_"
+            else:
+                draw_text = line
+            
+            col = C_NEON_GREEN
+            if "MISSION OBJECTIVES" in line: col = C_NEON_YELLOW
+            if "PRESS ANY KEY" in line: 
+                col = C_NEON_CYAN
+                if self.finished and (pygame.time.get_ticks() // 500) % 2 == 0:
+                    draw_text = "" 
+
+            txt_surf = self.font.render(draw_text, True, col)
+            surface.blit(txt_surf, (80, y))
+            y += 28
+
+# ------------------------------------------------------------
 # Combat Classes
 # ------------------------------------------------------------
 
@@ -124,62 +192,58 @@ class Projectile:
             self.active = False
 
     def draw(self, surface):
-        # Draw a glowing line/bullet
         end_pos = self.pos - self.vel * 0.5
         pygame.draw.line(surface, C_NEON_CYAN, self.pos, end_pos, 3)
         pygame.draw.circle(surface, C_WHITE, (int(self.pos.x), int(self.pos.y)), self.radius)
 
-class Boss:
-    def __init__(self):
-        self.pos = pygame.math.Vector2(SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 100)
-        self.radius = 40
-        self.hp = 100
-        self.max_hp = 100
-        self.angle = 0
-        self.pulse = 0
-        self.speed = 2.5
-        self.active = True
+class HerdMember:
+    """A single monster in the swarm."""
+    def __init__(self, x, y):
+        self.pos = pygame.math.Vector2(x, y)
+        self.vel = pygame.math.Vector2(0, 0)
+        self.hp = 4 # Takes 2 shots to kill (projectiles do 2 damage usually, let's say)
+        self.radius = 18
+        # Random speed to separate the herd
+        self.speed = random.uniform(1.8, 3.2) 
+        self.wobble_phase = random.uniform(0, 6.28)
+        self.eyes_offset = []
+        # Create random eyes
+        for _ in range(random.randint(2, 5)):
+            self.eyes_offset.append((random.randint(-8, 8), random.randint(-8, 8)))
 
     def update(self, player_pos):
-        if not self.active: return
-        
         # Chase logic
         direction = player_pos - self.pos
         if direction.length() > 0:
             direction = direction.normalize()
-        self.pos += direction * self.speed
         
-        self.pulse += 0.1
-        self.angle += 2
+        # Add some wobble
+        self.wobble_phase += 0.2
+        wobble = pygame.math.Vector2(math.sin(self.wobble_phase), math.cos(self.wobble_phase)) * 0.5
+        
+        self.pos += (direction * self.speed) + wobble
 
     def draw(self, surface):
-        if not self.active: return
-        
         cx, cy = int(self.pos.x), int(self.pos.y)
         
-        # Glitchy/Pulsing effect
-        pulse_size = math.sin(self.pulse) * 5
+        # Draw Spikes / Glitch body
+        # We draw a polygon that shifts shape slightly every frame to look scary
+        points = []
+        num_points = 8
+        for i in range(num_points):
+            angle = (i / num_points) * 6.28 + self.wobble_phase * 0.1
+            # Spiky radius
+            r = self.radius + random.randint(-5, 8)
+            px = cx + math.cos(angle) * r
+            py = cy + math.sin(angle) * r
+            points.append((px, py))
         
-        # Outer Aura
-        for i in range(3):
-            off_x = random.randint(-5, 5)
-            off_y = random.randint(-5, 5)
-            pygame.draw.circle(surface, (100, 0, 0), (cx + off_x, cy + off_y), self.radius + 10 + int(pulse_size))
-
-        # Core
-        pygame.draw.circle(surface, C_NEON_RED, (cx, cy), self.radius)
-        pygame.draw.circle(surface, (50, 0, 0), (cx, cy), self.radius - 10)
+        pygame.draw.polygon(surface, C_BLOOD_RED, points)
+        pygame.draw.polygon(surface, C_NEON_RED, points, 2)
         
-        # "Eye" looking at player
-        pygame.draw.circle(surface, C_NEON_YELLOW, (cx, cy), 8)
-
-        # Health Bar
-        bar_w = 100
-        bar_h = 10
-        pygame.draw.rect(surface, (50, 0, 0), (cx - bar_w//2, cy - self.radius - 20, bar_w, bar_h))
-        fill_w = int((self.hp / self.max_hp) * bar_w)
-        pygame.draw.rect(surface, C_NEON_RED, (cx - bar_w//2, cy - self.radius - 20, fill_w, bar_h))
-
+        # Draw Glowing Eyes
+        for off in self.eyes_offset:
+            pygame.draw.circle(surface, C_NEON_YELLOW, (cx + off[0], cy + off[1]), 2)
 
 # ------------------------------------------------------------
 # Game Classes
@@ -191,7 +255,6 @@ class GameState:
         self.herd_secret_known = False
         self.slip_repaired = False
         self.boss_unlocked = False
-        self.boss_defeated = False
         self.particles = ParticleSystem()
     
     def check_all_puzzles(self):
@@ -209,20 +272,14 @@ class Player:
 
     def handle_input(self, keys) -> None:
         accel = pygame.math.Vector2(0, 0)
-        if keys[pygame.K_a] or keys[pygame.K_LEFT]:
-            accel.x -= PLAYER_ACCEL
-        if keys[pygame.K_d] or keys[pygame.K_RIGHT]:
-            accel.x += PLAYER_ACCEL
-        if keys[pygame.K_w] or keys[pygame.K_UP]:
-            accel.y -= PLAYER_ACCEL
-        if keys[pygame.K_s] or keys[pygame.K_DOWN]:
-            accel.y += PLAYER_ACCEL
+        if keys[pygame.K_a] or keys[pygame.K_LEFT]: accel.x -= PLAYER_ACCEL
+        if keys[pygame.K_d] or keys[pygame.K_RIGHT]: accel.x += PLAYER_ACCEL
+        if keys[pygame.K_w] or keys[pygame.K_UP]: accel.y -= PLAYER_ACCEL
+        if keys[pygame.K_s] or keys[pygame.K_DOWN]: accel.y += PLAYER_ACCEL
 
         self.vel += accel
         self.vel *= PLAYER_FRICTION
-        if self.vel.length() > MAX_SPEED:
-            self.vel.scale_to_length(MAX_SPEED)
-
+        if self.vel.length() > MAX_SPEED: self.vel.scale_to_length(MAX_SPEED)
         self.pos += self.vel
         self.pos.x = max(0, min(self.pos.x, SCREEN_WIDTH - 32))
         self.pos.y = max(0, min(self.pos.y, SCREEN_HEIGHT - 32))
@@ -231,21 +288,19 @@ class Player:
     def draw(self, surface: pygame.Surface) -> None:
         if self.invuln_timer > 0:
             self.invuln_timer -= 1
-            if (self.invuln_timer // 5) % 2 == 0: # Blink effect
-                return
+            if (self.invuln_timer // 5) % 2 == 0: return
 
         mouse_pos = pygame.mouse.get_pos()
         dx = mouse_pos[0] - self.pos.x
         dy = mouse_pos[1] - self.pos.y
-        self.angle = math.degrees(math.atan2(-dy, dx)) # Simple visual angle
-
+        
         center = self.rect.center
         pygame.draw.circle(surface, C_NEON_CYAN, center, 12)
         pygame.draw.circle(surface, C_WHITE, center, 6)
         
-        # Weapon barrel
-        barrel_end = (center[0] + (dx/math.sqrt(dx**2 + dy**2))*20, 
-                      center[1] + (dy/math.sqrt(dx**2 + dy**2))*20)
+        # Gun
+        barrel_end = (center[0] + (dx/math.sqrt(dx**2 + dy**2+0.1))*20, 
+                      center[1] + (dy/math.sqrt(dx**2 + dy**2+0.1))*20)
         pygame.draw.line(surface, C_NEON_CYAN, center, barrel_end, 4)
 
 class RoomHub:
@@ -256,7 +311,6 @@ class RoomHub:
             "server": pygame.Rect(SCREEN_WIDTH // 2 - 60, 40, 120, 10),
             "engineering": pygame.Rect(SCREEN_WIDTH - 200, 40, 120, 10),
         }
-        # Boss door spawns later
         self.boss_door = pygame.Rect(SCREEN_WIDTH//2 - 100, SCREEN_HEIGHT - 60, 200, 20)
         self.power_console = pygame.Rect(SCREEN_WIDTH - 140, SCREEN_HEIGHT // 2 - 25, 80, 50)
         self.grid_offset = 0
@@ -266,10 +320,8 @@ class RoomHub:
         self.grid_offset = (self.grid_offset + 0.5) % 40
         line_col = C_GRID
         if alert_mode:
-            # Pulse red during alert
             red_val = 20 + int(math.sin(pygame.time.get_ticks() * 0.01) * 20)
             line_col = (red_val + 20, 0, 0)
-            
         for x in range(0, SCREEN_WIDTH, 40):
             pygame.draw.line(surface, line_col, (x, 0), (x, SCREEN_HEIGHT))
         for y in range(0, SCREEN_HEIGHT, 40):
@@ -282,20 +334,15 @@ class RoomHub:
         surface.fill(C_BG_DEEP)
         self.draw_bg_grid(surface, alert_mode=game_state.boss_unlocked)
 
-        # Draw Standard Doors
         for key, rect in self.doors.items():
-            col = C_NEON_BLUE
-            pygame.draw.rect(surface, col, rect)
+            pygame.draw.rect(surface, C_NEON_BLUE, rect)
             draw_text_shadow(surface, self.font, key.upper(), C_WHITE, (rect.centerx, rect.bottom + 40))
 
-        # Boss Door (Only if unlocked)
         if game_state.boss_unlocked:
             self.alert_blink += 1
             blink_col = C_NEON_RED if (self.alert_blink // 30) % 2 == 0 else (100, 0, 0)
-            
             draw_glow_rect(surface, blink_col, self.boss_door, glow_radius=15)
             draw_text_shadow(surface, self.font, "!!! AIRLOCK OPEN !!!", C_NEON_RED, (self.boss_door.centerx, self.boss_door.top - 30))
-            draw_text_shadow(surface, self.font, "ENTITY DETECTED", C_NEON_RED, (self.boss_door.centerx, self.boss_door.top - 10))
 
         # Power Console
         console_color = C_NEON_YELLOW if not game_state.power_restored else C_NEON_GREEN
@@ -303,7 +350,6 @@ class RoomHub:
         status = "PWR: OFF" if not game_state.power_restored else "PWR: ON"
         draw_text_shadow(surface, self.font, status, console_color, (self.power_console.centerx, self.power_console.top - 20))
 
-        # Interactions
         interact = self.check_interaction(player, game_state)
         if interact:
             hint_text = f"[E] ENTER {interact.upper()}"
@@ -312,130 +358,13 @@ class RoomHub:
 
     def check_interaction(self, player: Player, game_state: GameState) -> Optional[str]:
         for name, rect in self.doors.items():
-            if player.rect.colliderect(rect.inflate(20, 100)):
-                return name
-        
-        if game_state.boss_unlocked and player.rect.colliderect(self.boss_door.inflate(20, 60)):
-            return "boss_room"
-
-        if player.rect.colliderect(self.power_console.inflate(20, 20)):
-            return "power_console"
+            if player.rect.colliderect(rect.inflate(20, 100)): return name
+        if game_state.boss_unlocked and player.rect.colliderect(self.boss_door.inflate(20, 60)): return "boss_room"
+        if player.rect.colliderect(self.power_console.inflate(20, 20)): return "power_console"
         return None
 
-class BossRoom:
-    """The final arena."""
-    def __init__(self, font: pygame.font.Font, game_state: GameState, particles: ParticleSystem):
-        self.font = font
-        self.game_state = game_state
-        self.particles = particles
-        self.boss = Boss()
-        self.projectiles: List[Projectile] = []
-        self.state = "intro" # intro, fight, win, game_over
-        self.intro_timer = 120
-
-    def reset(self, player: Player):
-        self.boss = Boss()
-        self.projectiles = []
-        self.state = "intro"
-        self.intro_timer = 180
-        player.pos = pygame.math.Vector2(SCREEN_WIDTH//2, SCREEN_HEIGHT - 100)
-        player.hp = 5
-
-    def handle_event(self, event: pygame.event.Event, player: Player):
-        if self.state == "fight":
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                # Shoot
-                mx, my = pygame.mouse.get_pos()
-                dx = mx - player.pos.x
-                dy = my - player.pos.y
-                angle = math.atan2(dy, dx)
-                
-                # Spawn bullet
-                self.projectiles.append(Projectile(player.pos.x + 16, player.pos.y + 16, angle))
-                # Recoil effect (particles)
-                self.particles.spawn(player.pos.x, player.pos.y, C_NEON_CYAN, count=5, speed=1)
-
-    def update(self, player: Player):
-        if self.state == "intro":
-            self.intro_timer -= 1
-            if self.intro_timer <= 0:
-                self.state = "fight"
-        
-        if self.state == "fight":
-            # Update Boss
-            self.boss.update(player.pos)
-            
-            # Check Boss hitting Player
-            boss_rect = pygame.Rect(self.boss.pos.x - self.boss.radius, self.boss.pos.y - self.boss.radius, 
-                                    self.boss.radius*2, self.boss.radius*2)
-            if player.invuln_timer == 0 and boss_rect.colliderect(player.rect):
-                player.hp -= 1
-                player.invuln_timer = 60
-                self.particles.spawn(player.pos.x, player.pos.y, C_NEON_RED, count=20, speed=4)
-                if player.hp <= 0:
-                    self.state = "game_over"
-
-            # Update Projectiles
-            for p in self.projectiles:
-                p.update()
-                # Check collision with Boss
-                dist_to_boss = p.pos.distance_to(self.boss.pos)
-                if dist_to_boss < self.boss.radius:
-                    self.boss.hp -= 2
-                    p.active = False
-                    self.particles.spawn(p.pos.x, p.pos.y, C_NEON_YELLOW, count=8)
-                    if self.boss.hp <= 0:
-                        self.boss.active = False
-                        self.state = "win"
-                        # Big explosion
-                        self.particles.spawn(self.boss.pos.x, self.boss.pos.y, C_NEON_RED, count=100, speed=6, life_scale=3.0)
-
-            self.projectiles = [p for p in self.projectiles if p.active]
-
-    def draw(self, surface: pygame.Surface, player: Player):
-        # Background
-        surface.fill((20, 0, 0))
-        # Moving Grid
-        t = pygame.time.get_ticks() * 0.05
-        for i in range(0, SCREEN_WIDTH + 100, 100):
-            x = (i + t) % (SCREEN_WIDTH + 100) - 50
-            pygame.draw.line(surface, (50, 0, 0), (x, 0), (x, SCREEN_HEIGHT))
-
-        # Draw Boss
-        if self.boss.active:
-            self.boss.draw(surface)
-
-        # Draw Projectiles
-        for p in self.projectiles:
-            p.draw(surface)
-
-        # Draw Player
-        player.draw(surface)
-
-        # UI Overlays
-        if self.state == "intro":
-            draw_text_shadow(surface, self.font, "WARNING: SPECIMEN BREACH", C_NEON_RED, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
-            draw_text_shadow(surface, self.font, "ELIMINATE THE TARGET", C_WHITE, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
-        
-        elif self.state == "game_over":
-            s = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
-            s.fill((0, 0, 0, 150))
-            surface.blit(s, (0,0))
-            draw_text_shadow(surface, self.font, "STATUS: DECEASED", C_NEON_RED, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
-            draw_text_shadow(surface, self.font, "PRESS ESC TO RETRY", C_WHITE, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 40))
-
-        elif self.state == "win":
-            draw_text_shadow(surface, self.font, "TARGET ELIMINATED", C_NEON_GREEN, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
-            draw_text_shadow(surface, self.font, "TERMINAL SECURED. MISSION COMPLETE.", C_WHITE, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 40))
-
-        # Player HUD
-        if self.state == "fight":
-            hp_text = f"INTEGRITY: {player.hp * 20}%"
-            col = C_NEON_GREEN if player.hp > 2 else C_NEON_RED
-            draw_text_shadow(surface, self.font, hp_text, col, (100, SCREEN_HEIGHT - 30))
-
 # ------------------------------------------------------------
-# Puzzles
+# Puzzles (Enhanced Botany)
 # ------------------------------------------------------------
 
 class PowerGridPuzzle:
@@ -459,19 +388,15 @@ class PowerGridPuzzle:
                     self.sequence.append(name)
                     self.particles.spawn(event.pos[0], event.pos[1], self.colors_map[name])
                     if len(self.sequence) == len(self.ORDER):
-                        if self.sequence == self.ORDER:
-                            self.resolved = True
-                        else:
-                            self.failed_timer = 60
+                        if self.sequence == self.ORDER: self.resolved = True
+                        else: self.failed_timer = 60
 
     def draw(self, surface) -> None:
         surface.fill((10, 5, 5))
         draw_text_shadow(surface, self.font, "POWER GRID CALIBRATION", C_NEON_CYAN, (SCREEN_WIDTH//2, 40))
-        # Riddle
         riddle = ['"The sky comes before the sun...', '...but the grass must never touch the blood.', 'The sun is not last."']
         for i, line in enumerate(riddle):
             draw_text_shadow(surface, self.font, line, C_WHITE, (SCREEN_WIDTH//2, 90 + i*30))
-        # Buttons
         for name, rect in self.buttons.items():
             color = self.colors_map[name]
             is_active = name in self.sequence
@@ -501,49 +426,45 @@ class ServerRoomPuzzle:
                 if self.input_text.strip().lower() == self.TARGET:
                     self.solved = True
                     self.game_state.herd_secret_known = True
-            elif event.key == pygame.K_BACKSPACE:
-                self.input_text = self.input_text[:-1]
-            elif len(self.input_text) < 30 and event.unicode.isprintable():
-                self.input_text += event.unicode
+            elif event.key == pygame.K_BACKSPACE: self.input_text = self.input_text[:-1]
+            elif len(self.input_text) < 30 and event.unicode.isprintable(): self.input_text += event.unicode
 
     def draw(self, surface) -> None:
         surface.fill((0, 10, 0))
         term_rect = pygame.Rect(100, 80, SCREEN_WIDTH - 200, SCREEN_HEIGHT - 160)
         pygame.draw.rect(surface, (0, 20, 0), term_rect)
         pygame.draw.rect(surface, C_NEON_GREEN, term_rect, 2)
-        
         lines = ["ADMIN_CONSOLE_V7.2", "LOG_ENCRYPTED [ROT-3]", 'RAW: "Wkhy duh lq wkh khug."', ""]
         y = 100
         for l in lines:
             surface.blit(self.font.render(l, True, C_NEON_GREEN), (120, y))
             y += 30
-        
         self.cursor_blink = (self.cursor_blink + 1) % 60
         cursor = "_" if self.cursor_blink < 30 else ""
         surface.blit(self.font.render(f"> {self.input_text}{cursor}", True, C_WHITE if not self.solved else C_NEON_CYAN), (120, y))
-        
         if self.solved:
             draw_text_shadow(surface, self.font, "ACCESS GRANTED. SUBJECT: 'THE HERD' IS SENTIENT.", C_NEON_GREEN, (SCREEN_WIDTH//2, y + 80))
 
 class BotanyRoom:
-    """Restored with atmospheric spores (dots)."""
+    """Revised Puzzle: Particle Simulation."""
     def __init__(self, font, game_state, particles) -> None:
         self.font = font
         self.game_state = game_state
         self.particles = particles
-        self.tanks = {"A": pygame.Rect(0,0,120,200), "B": pygame.Rect(0,0,120,200), "C": pygame.Rect(0,0,120,200)}
+        self.tanks = {"A": pygame.Rect(0,0,140,220), "B": pygame.Rect(0,0,140,220), "C": pygame.Rect(0,0,140,220)}
         
-        # Init Spores (The dots)
-        self.cells = [] 
-        for _ in range(50):
-            # [x, y, speed]
-            self.cells.append([random.randint(0, SCREEN_WIDTH), random.randint(0, SCREEN_HEIGHT), random.uniform(0.5, 2)])
-
-        start_x = (SCREEN_WIDTH - (3*120 + 2*80)) // 2
+        spacing = 250
+        start_x = (SCREEN_WIDTH - (3*140 + 2*50)) // 2
         for i, k in enumerate(["A", "B", "C"]):
-            self.tanks[k].topleft = (start_x + i*200, SCREEN_HEIGHT//2 - 100)
+            self.tanks[k].topleft = (start_x + i*spacing, SCREEN_HEIGHT//2 - 110)
+        
         self.solved = False
         self.message = ""
+        self.sim_particles = {
+            "A": [[random.randint(0, 140), random.randint(0, 220), random.uniform(-2,2), random.uniform(-2,2)] for _ in range(20)],
+            "B": [[random.randint(0, 140), random.randint(0, 220), 0, 0] for _ in range(20)],
+            "C": [[random.randint(0, 140), random.randint(0, 220), i] for i in range(20)]
+        }
 
     def handle_event(self, event) -> None:
         if event.type == pygame.MOUSEBUTTONDOWN and not self.solved:
@@ -552,27 +473,55 @@ class BotanyRoom:
                     if name == "C":
                         self.solved = True
                         self.game_state.herd_secret_known = True
-                        self.message = "MATCH CONFIRMED: PREDICTIVE ALGORITHM DETECTED."
+                        self.message = "MATCH CONFIRMED: ORGANIZED INTELLIGENCE DETECTED."
                         self.particles.spawn(rect.centerx, rect.centery, C_NEON_GREEN, 30)
                     else:
-                        self.message = f"SPECIMEN {name}: NEGATIVE. STANDARD BEHAVIOR."
+                        self.message = f"SPECIMEN {name}: NEGATIVE. NO HIGHER THOUGHT PATTERNS."
                         self.particles.spawn(rect.centerx, rect.centery, C_NEON_RED, 10)
 
     def draw(self, surface) -> None:
         surface.fill((5, 20, 10))
-        
-        # Draw Floating Spores
-        for c in self.cells:
-            c[1] -= c[2] # Move up
-            if c[1] < 0: c[1] = SCREEN_HEIGHT
-            # Draw faint spore
-            pygame.draw.circle(surface, (40, 80, 50), (int(c[0]), int(c[1])), 2)
+        draw_text_shadow(surface, self.font, "BIO-LAB: IDENTIFY INTELLIGENT LIFE", C_NEON_GREEN, (SCREEN_WIDTH//2, 40))
+        draw_text_shadow(surface, self.font, "Analyze movement patterns. Look for Order.", C_WHITE, (SCREEN_WIDTH//2, 70))
 
-        draw_text_shadow(surface, self.font, "BIO-LAB: SUBJECT IDENTIFICATION", C_NEON_GREEN, (SCREEN_WIDTH//2, 40))
+        mouse_pos = pygame.mouse.get_pos()
+        time_t = pygame.time.get_ticks() * 0.005
+
         for name, rect in self.tanks.items():
             color = C_NEON_GREEN if name == "C" and self.solved else C_NEON_CYAN
-            pygame.draw.rect(surface, (0, 20, 10), rect, border_radius=10)
+            pygame.draw.rect(surface, (0, 30, 20), rect, border_radius=10)
             pygame.draw.rect(surface, color, rect, 2, border_radius=10)
+            
+            plist = self.sim_particles[name]
+            for i, p in enumerate(plist):
+                px, py = 0, 0
+                if name == "A": 
+                    p[0] += p[2]
+                    p[1] += p[3]
+                    if p[0] < 0 or p[0] > 140: p[2] *= -1
+                    if p[1] < 0 or p[1] > 220: p[3] *= -1
+                    px, py = rect.x + p[0], rect.y + p[1]
+                elif name == "B": 
+                    target_x = max(0, min(140, mouse_pos[0] - rect.x))
+                    target_y = max(0, min(220, mouse_pos[1] - rect.y))
+                    dx = target_x - p[0]
+                    dy = target_y - p[1]
+                    dist = math.sqrt(dx*dx + dy*dy)
+                    if dist > 0:
+                        p[0] += (dx/dist) * 4
+                        p[1] += (dy/dist) * 4
+                    p[0] += random.uniform(-2, 2)
+                    p[1] += random.uniform(-2, 2)
+                    px, py = rect.x + p[0], rect.y + p[1]
+                elif name == "C": 
+                    center_x, center_y = 70, 110
+                    radius = 40
+                    angle = time_t + (p[2] * (6.28 / 20))
+                    p[0] = center_x + math.cos(angle) * radius
+                    p[1] = center_y + math.sin(angle) * radius
+                    px, py = rect.x + p[0], rect.y + p[1]
+                pygame.draw.circle(surface, C_NEON_GREEN if name == "C" else (100, 255, 100), (int(px), int(py)), 3)
+
             draw_text_shadow(surface, self.font, name, color, (rect.centerx, rect.top - 20))
         
         if self.message:
@@ -607,8 +556,117 @@ class EngineeringRoom:
         if self.game_state.slip_repaired:
             draw_text_shadow(surface, self.font, "DRIVE STABLE", C_NEON_GREEN, (SCREEN_WIDTH//2, SCREEN_HEIGHT - 60))
 
+class BossRoom:
+    def __init__(self, font: pygame.font.Font, game_state: GameState, particles: ParticleSystem):
+        self.font = font
+        self.game_state = game_state
+        self.particles = particles
+        self.swarm: List[HerdMember] = []
+        self.projectiles: List[Projectile] = []
+        self.state = "intro" 
+        self.intro_timer = 120
+
+    def reset(self, player: Player):
+        self.swarm = []
+        # Spawn the Swarm (15 monsters)
+        for _ in range(15):
+            x = random.randint(100, SCREEN_WIDTH - 100)
+            y = random.randint(50, 200)
+            self.swarm.append(HerdMember(x, y))
+            
+        self.projectiles = []
+        self.state = "intro"
+        self.intro_timer = 180
+        player.pos = pygame.math.Vector2(SCREEN_WIDTH//2, SCREEN_HEIGHT - 100)
+        player.hp = 5
+
+    def handle_event(self, event: pygame.event.Event, player: Player):
+        if self.state == "fight":
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                mx, my = pygame.mouse.get_pos()
+                dx = mx - player.pos.x
+                dy = my - player.pos.y
+                angle = math.atan2(dy, dx)
+                self.projectiles.append(Projectile(player.pos.x + 16, player.pos.y + 16, angle))
+                self.particles.spawn(player.pos.x, player.pos.y, C_NEON_CYAN, count=5, speed=1)
+
+    def update(self, player: Player):
+        if self.state == "intro":
+            self.intro_timer -= 1
+            if self.intro_timer <= 0: self.state = "fight"
+        
+        if self.state == "fight":
+            # Update Swarm
+            for monster in self.swarm:
+                monster.update(player.pos)
+                
+                # Player Hit Logic
+                monster_rect = pygame.Rect(monster.pos.x - monster.radius, monster.pos.y - monster.radius, 
+                                           monster.radius*2, monster.radius*2)
+                if player.invuln_timer == 0 and monster_rect.colliderect(player.rect):
+                    player.hp -= 1
+                    player.invuln_timer = 60
+                    self.particles.spawn(player.pos.x, player.pos.y, C_NEON_RED, count=20, speed=4)
+                    if player.hp <= 0: self.state = "game_over"
+
+            # Projectile Logic
+            for p in self.projectiles:
+                p.update()
+                hit = False
+                for monster in self.swarm:
+                    dist = p.pos.distance_to(monster.pos)
+                    if dist < monster.radius + 5:
+                        monster.hp -= 2 # 2 damage per shot
+                        self.particles.spawn(monster.pos.x, monster.pos.y, C_BLOOD_RED, count=5)
+                        hit = True
+                        break # One bullet hits one monster
+                if hit:
+                    p.active = False
+            
+            # Remove Dead Monsters and Projectiles
+            dead_monsters = [m for m in self.swarm if m.hp <= 0]
+            for m in dead_monsters:
+                self.particles.spawn(m.pos.x, m.pos.y, C_NEON_RED, count=15, speed=3)
+            
+            self.swarm = [m for m in self.swarm if m.hp > 0]
+            self.projectiles = [p for p in self.projectiles if p.active]
+
+            # Win Condition
+            if len(self.swarm) == 0:
+                self.state = "win"
+
+    def draw(self, surface: pygame.Surface, player: Player):
+        surface.fill((20, 0, 0))
+        t = pygame.time.get_ticks() * 0.05
+        for i in range(0, SCREEN_WIDTH + 100, 100):
+            x = (i + t) % (SCREEN_WIDTH + 100) - 50
+            pygame.draw.line(surface, (50, 0, 0), (x, 0), (x, SCREEN_HEIGHT))
+
+        for m in self.swarm: m.draw(surface)
+        for p in self.projectiles: p.draw(surface)
+        player.draw(surface)
+
+        if self.state == "intro":
+            draw_text_shadow(surface, self.font, "WARNING: CONTAINMENT FAILURE", C_NEON_RED, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
+            draw_text_shadow(surface, self.font, "THE HERD APPROACHES", C_WHITE, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+        elif self.state == "game_over":
+            draw_text_shadow(surface, self.font, "STATUS: CONSUMED BY THE SWARM", C_NEON_RED, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+            draw_text_shadow(surface, self.font, "PRESS ESC TO RETRY", C_WHITE, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 40))
+        elif self.state == "win":
+            draw_text_shadow(surface, self.font, "ALL ENTITIES ELIMINATED", C_NEON_GREEN, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+            draw_text_shadow(surface, self.font, "TERMINAL SECURED.", C_WHITE, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 40))
+
+        if self.state == "fight":
+            hp_text = f"INTEGRITY: {player.hp * 20}%"
+            col = C_NEON_GREEN if player.hp > 2 else C_NEON_RED
+            draw_text_shadow(surface, self.font, hp_text, col, (100, SCREEN_HEIGHT - 30))
+            
+            # Enemy Counter
+            count_text = f"ENTITIES: {len(self.swarm)}"
+            draw_text_shadow(surface, self.font, count_text, C_NEON_RED, (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 30))
+
 # ------------------------------------------------------------
-# Main Loop & CRT Effect
+# Main Loop
 # ------------------------------------------------------------
 
 def draw_crt_overlay(surface):
@@ -620,22 +678,27 @@ def draw_crt_overlay(surface):
 
 def main() -> None:
     pygame.init()
-    pygame.display.set_caption("Echo of Terminal 7 — Boss Edition")
+    pygame.display.set_caption("Echo of Terminal 7 — The Herd Edition")
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("arial", 18, bold=True)
+    mono_font = pygame.font.SysFont("consolas", 20) 
 
     game_state = GameState()
     player = Player(SCREEN_WIDTH // 2, SCREEN_HEIGHT - 100)
     
+    # Screens
+    intro_screen = IntroScreen(mono_font)
     hub = RoomHub(font)
+    
+    # Puzzles
     power_puzzle = PowerGridPuzzle(font, game_state.particles)
     server_puzzle = ServerRoomPuzzle(font, game_state)
     botany_room = BotanyRoom(font, game_state, game_state.particles)
     engineering_room = EngineeringRoom(font, game_state)
     boss_room = BossRoom(font, game_state, game_state.particles)
 
-    mode = "hub"
+    mode = "intro" 
     running = True
     canvas = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
 
@@ -645,17 +708,19 @@ def main() -> None:
         keys = pygame.key.get_pressed()
 
         for event in events:
-            if event.type == pygame.QUIT:
-                running = False
+            if event.type == pygame.QUIT: running = False
+            
+            # Global Key Handling
+            elif mode == "intro":
+                if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                    mode = "hub" 
+            
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 if mode == "hub": running = False
                 elif mode == "boss_room" and boss_room.state == "game_over":
-                    # Reset boss fight on fail
                     boss_room.reset(player)
                 else: 
-                    # If leaving a puzzle, check if we just unlocked the boss
-                    if mode != "boss_room":
-                        game_state.check_all_puzzles()
+                    if mode != "boss_room": game_state.check_all_puzzles()
                     mode = "hub"
             else:
                 if mode == "power_puzzle": power_puzzle.handle_event(event)
@@ -664,9 +729,12 @@ def main() -> None:
                 elif mode == "engineering": engineering_room.handle_event(event)
                 elif mode == "boss_room": boss_room.handle_event(event, player)
 
-        if mode == "hub":
+        if mode == "intro":
+            intro_screen.update()
+            intro_screen.draw(canvas)
+
+        elif mode == "hub":
             player.handle_input(keys)
-            # Check puzzle states
             if power_puzzle.resolved: game_state.power_restored = True
             game_state.check_all_puzzles()
 
@@ -684,17 +752,17 @@ def main() -> None:
             player.draw(canvas)
             
         elif mode == "boss_room":
-            if boss_room.state == "fight":
-                player.handle_input(keys)
+            if boss_room.state == "fight": player.handle_input(keys)
             boss_room.update(player)
             boss_room.draw(canvas, player)
-            
         elif mode == "power_puzzle": power_puzzle.draw(canvas)
         elif mode == "server": server_puzzle.draw(canvas)
         elif mode == "botany": botany_room.draw(canvas)
         elif mode == "engineering": engineering_room.draw(canvas)
 
-        game_state.particles.update_and_draw(canvas)
+        if mode != "intro":
+            game_state.particles.update_and_draw(canvas)
+        
         screen.blit(canvas, (0,0))
         draw_crt_overlay(screen)
         pygame.display.flip()
