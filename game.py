@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Echo of Terminal 7 — The Herd Edition.
+Echo of Terminal 7 — Surrounded Edition.
 Features:
 - Intro Story Screen.
 - Neon aesthetics, CRT effects, Smooth Physics.
-- ENDING: "The Herd" Swarm Battle (Multiple Enemies).
+- ENDING: "The Herd" Swarm Battle (Faster, Shooting, Omni-directional Spawns).
 - Fully implemented Puzzles.
 """
 
@@ -26,7 +26,8 @@ FPS = 60
 PLAYER_ACCEL = 0.8
 PLAYER_FRICTION = 0.85
 MAX_SPEED = 6
-PROJECTILE_SPEED = 14
+PLAYER_PROJECTILE_SPEED = 14
+ENEMY_PROJECTILE_SPEED = 7
 
 # Colors (Neon Palette)
 C_BG_DEEP = (5, 5, 12)
@@ -179,10 +180,11 @@ class IntroScreen:
 # ------------------------------------------------------------
 
 class Projectile:
-    def __init__(self, x, y, angle_rad):
+    def __init__(self, x, y, angle_rad, speed, color):
         self.pos = pygame.math.Vector2(x, y)
-        self.vel = pygame.math.Vector2(math.cos(angle_rad), math.sin(angle_rad)) * PROJECTILE_SPEED
+        self.vel = pygame.math.Vector2(math.cos(angle_rad), math.sin(angle_rad)) * speed
         self.radius = 4
+        self.color = color
         self.active = True
 
     def update(self):
@@ -193,46 +195,46 @@ class Projectile:
 
     def draw(self, surface):
         end_pos = self.pos - self.vel * 0.5
-        pygame.draw.line(surface, C_NEON_CYAN, self.pos, end_pos, 3)
+        pygame.draw.line(surface, self.color, self.pos, end_pos, 3)
         pygame.draw.circle(surface, C_WHITE, (int(self.pos.x), int(self.pos.y)), self.radius)
 
 class HerdMember:
-    """A single monster in the swarm."""
     def __init__(self, x, y):
         self.pos = pygame.math.Vector2(x, y)
         self.vel = pygame.math.Vector2(0, 0)
-        self.hp = 4 # Takes 2 shots to kill (projectiles do 2 damage usually, let's say)
+        self.hp = 4
         self.radius = 18
-        # Random speed to separate the herd
-        self.speed = random.uniform(1.8, 3.2) 
+        self.speed = random.uniform(3.5, 5.0) 
         self.wobble_phase = random.uniform(0, 6.28)
         self.eyes_offset = []
-        # Create random eyes
         for _ in range(random.randint(2, 5)):
             self.eyes_offset.append((random.randint(-8, 8), random.randint(-8, 8)))
+        self.shoot_timer = random.randint(60, 200)
 
-    def update(self, player_pos):
-        # Chase logic
+    def update(self, player_pos, enemy_projectiles_list):
         direction = player_pos - self.pos
         if direction.length() > 0:
             direction = direction.normalize()
         
-        # Add some wobble
         self.wobble_phase += 0.2
         wobble = pygame.math.Vector2(math.sin(self.wobble_phase), math.cos(self.wobble_phase)) * 0.5
-        
         self.pos += (direction * self.speed) + wobble
+
+        self.shoot_timer -= 1
+        if self.shoot_timer <= 0:
+            self.shoot_timer = random.randint(120, 240)
+            dx = player_pos.x - self.pos.x
+            dy = player_pos.y - self.pos.y
+            angle = math.atan2(dy, dx)
+            proj = Projectile(self.pos.x, self.pos.y, angle, ENEMY_PROJECTILE_SPEED, C_NEON_RED)
+            enemy_projectiles_list.append(proj)
 
     def draw(self, surface):
         cx, cy = int(self.pos.x), int(self.pos.y)
-        
-        # Draw Spikes / Glitch body
-        # We draw a polygon that shifts shape slightly every frame to look scary
         points = []
         num_points = 8
         for i in range(num_points):
             angle = (i / num_points) * 6.28 + self.wobble_phase * 0.1
-            # Spiky radius
             r = self.radius + random.randint(-5, 8)
             px = cx + math.cos(angle) * r
             py = cy + math.sin(angle) * r
@@ -240,8 +242,6 @@ class HerdMember:
         
         pygame.draw.polygon(surface, C_BLOOD_RED, points)
         pygame.draw.polygon(surface, C_NEON_RED, points, 2)
-        
-        # Draw Glowing Eyes
         for off in self.eyes_offset:
             pygame.draw.circle(surface, C_NEON_YELLOW, (cx + off[0], cy + off[1]), 2)
 
@@ -562,22 +562,35 @@ class BossRoom:
         self.game_state = game_state
         self.particles = particles
         self.swarm: List[HerdMember] = []
-        self.projectiles: List[Projectile] = []
+        self.player_projectiles: List[Projectile] = []
+        self.enemy_projectiles: List[Projectile] = []
         self.state = "intro" 
         self.intro_timer = 120
 
     def reset(self, player: Player):
         self.swarm = []
-        # Spawn the Swarm (15 monsters)
         for _ in range(15):
-            x = random.randint(100, SCREEN_WIDTH - 100)
-            y = random.randint(50, 200)
+            side = random.randint(0, 3)
+            if side == 0: # Top
+                x = random.randint(0, SCREEN_WIDTH)
+                y = random.randint(-60, -20)
+            elif side == 1: # Bottom
+                x = random.randint(0, SCREEN_WIDTH)
+                y = random.randint(SCREEN_HEIGHT + 20, SCREEN_HEIGHT + 60)
+            elif side == 2: # Left
+                x = random.randint(-60, -20)
+                y = random.randint(0, SCREEN_HEIGHT)
+            else: # Right
+                x = random.randint(SCREEN_WIDTH + 20, SCREEN_WIDTH + 60)
+                y = random.randint(0, SCREEN_HEIGHT)
             self.swarm.append(HerdMember(x, y))
             
-        self.projectiles = []
+        self.player_projectiles = []
+        self.enemy_projectiles = []
         self.state = "intro"
         self.intro_timer = 180
-        player.pos = pygame.math.Vector2(SCREEN_WIDTH//2, SCREEN_HEIGHT - 100)
+        # Place player in CENTER to be surrounded
+        player.pos = pygame.math.Vector2(SCREEN_WIDTH//2, SCREEN_HEIGHT//2)
         player.hp = 5
 
     def handle_event(self, event: pygame.event.Event, player: Player):
@@ -587,7 +600,7 @@ class BossRoom:
                 dx = mx - player.pos.x
                 dy = my - player.pos.y
                 angle = math.atan2(dy, dx)
-                self.projectiles.append(Projectile(player.pos.x + 16, player.pos.y + 16, angle))
+                self.player_projectiles.append(Projectile(player.pos.x + 16, player.pos.y + 16, angle, PLAYER_PROJECTILE_SPEED, C_NEON_CYAN))
                 self.particles.spawn(player.pos.x, player.pos.y, C_NEON_CYAN, count=5, speed=1)
 
     def update(self, player: Player):
@@ -598,9 +611,9 @@ class BossRoom:
         if self.state == "fight":
             # Update Swarm
             for monster in self.swarm:
-                monster.update(player.pos)
+                monster.update(player.pos, self.enemy_projectiles)
                 
-                # Player Hit Logic
+                # Player Hit by Body
                 monster_rect = pygame.Rect(monster.pos.x - monster.radius, monster.pos.y - monster.radius, 
                                            monster.radius*2, monster.radius*2)
                 if player.invuln_timer == 0 and monster_rect.colliderect(player.rect):
@@ -609,27 +622,42 @@ class BossRoom:
                     self.particles.spawn(player.pos.x, player.pos.y, C_NEON_RED, count=20, speed=4)
                     if player.hp <= 0: self.state = "game_over"
 
-            # Projectile Logic
-            for p in self.projectiles:
+            # Check Player Hit by Enemy Projectiles
+            for p in self.enemy_projectiles:
+                p.update()
+                dist = p.pos.distance_to(player.pos)
+                if p.active and dist < 20: 
+                    if player.invuln_timer == 0:
+                        player.hp -= 1
+                        player.invuln_timer = 60
+                        self.particles.spawn(player.pos.x, player.pos.y, C_NEON_RED, count=15, speed=3)
+                        p.active = False
+                        if player.hp <= 0: self.state = "game_over"
+                    else:
+                        p.active = False 
+
+            # Check Enemies Hit by Player Projectiles
+            for p in self.player_projectiles:
                 p.update()
                 hit = False
                 for monster in self.swarm:
                     dist = p.pos.distance_to(monster.pos)
                     if dist < monster.radius + 5:
-                        monster.hp -= 2 # 2 damage per shot
+                        monster.hp -= 2 
                         self.particles.spawn(monster.pos.x, monster.pos.y, C_BLOOD_RED, count=5)
                         hit = True
-                        break # One bullet hits one monster
+                        break 
                 if hit:
                     p.active = False
             
-            # Remove Dead Monsters and Projectiles
+            # Cleanup
             dead_monsters = [m for m in self.swarm if m.hp <= 0]
             for m in dead_monsters:
                 self.particles.spawn(m.pos.x, m.pos.y, C_NEON_RED, count=15, speed=3)
             
             self.swarm = [m for m in self.swarm if m.hp > 0]
-            self.projectiles = [p for p in self.projectiles if p.active]
+            self.player_projectiles = [p for p in self.player_projectiles if p.active]
+            self.enemy_projectiles = [p for p in self.enemy_projectiles if p.active]
 
             # Win Condition
             if len(self.swarm) == 0:
@@ -643,12 +671,13 @@ class BossRoom:
             pygame.draw.line(surface, (50, 0, 0), (x, 0), (x, SCREEN_HEIGHT))
 
         for m in self.swarm: m.draw(surface)
-        for p in self.projectiles: p.draw(surface)
+        for p in self.player_projectiles: p.draw(surface)
+        for p in self.enemy_projectiles: p.draw(surface)
         player.draw(surface)
 
         if self.state == "intro":
             draw_text_shadow(surface, self.font, "WARNING: CONTAINMENT FAILURE", C_NEON_RED, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2 - 50))
-            draw_text_shadow(surface, self.font, "THE HERD APPROACHES", C_WHITE, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
+            draw_text_shadow(surface, self.font, "THE HERD APPROACHES FROM ALL SIDES", C_WHITE, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
         elif self.state == "game_over":
             draw_text_shadow(surface, self.font, "STATUS: CONSUMED BY THE SWARM", C_NEON_RED, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2))
             draw_text_shadow(surface, self.font, "PRESS ESC TO RETRY", C_WHITE, (SCREEN_WIDTH//2, SCREEN_HEIGHT//2 + 40))
@@ -660,8 +689,6 @@ class BossRoom:
             hp_text = f"INTEGRITY: {player.hp * 20}%"
             col = C_NEON_GREEN if player.hp > 2 else C_NEON_RED
             draw_text_shadow(surface, self.font, hp_text, col, (100, SCREEN_HEIGHT - 30))
-            
-            # Enemy Counter
             count_text = f"ENTITIES: {len(self.swarm)}"
             draw_text_shadow(surface, self.font, count_text, C_NEON_RED, (SCREEN_WIDTH - 100, SCREEN_HEIGHT - 30))
 
@@ -678,7 +705,7 @@ def draw_crt_overlay(surface):
 
 def main() -> None:
     pygame.init()
-    pygame.display.set_caption("Echo of Terminal 7 — The Herd Edition")
+    pygame.display.set_caption("Echo of Terminal 7 — Surrounded Edition")
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
     font = pygame.font.SysFont("arial", 18, bold=True)
