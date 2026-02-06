@@ -31,21 +31,19 @@ Steps
 - Open a terminal or command prompt.
 
 - Navigate to the folder containing the project files (the folder with game.py).
-  Example: cd path/to/sprint1
-
-- Run the game by typing: python game.py
+  
+- You must have pygame installed .Run the game by typing: python game.py
   (On macOS/Linux, use: python3 game.py)
 
 - A window titled “Echo of Terminal 7 — Pygame Prototype” should open.
 #### Prerequisites
-- Run on the school computer as WakeTech won't let us
 - Python 3.8+  
 - `pygame` 2.x  
 
 Install Pygame (once):
 
 ```bash
-pip install pygame
+ python -m pip install pygame-ce
 ```
 
 #### Steps
