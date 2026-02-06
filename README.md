@@ -45,7 +45,7 @@ Steps
 Install Pygame (once):
 
 ```bash
-pip install pygame
+ python -m pip install pygame-ce
 ```
 
 #### Steps
