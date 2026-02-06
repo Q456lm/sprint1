@@ -705,6 +705,12 @@ def draw_crt_overlay(surface):
 
 def main() -> None:
     pygame.init()
+    pygame.mixer.init()
+
+    pygame.mixer.music.load("18. The Scrybe of Technology.mp3")
+    pygame.mixer.music.set_volume(0.5)
+    pygame.mixer.music.play(-1)
+    pygame.display.set_caption("Echo of Terminal 7 — The Herd Edition")
     pygame.display.set_caption("Echo of Terminal 7 — Surrounded Edition")
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()

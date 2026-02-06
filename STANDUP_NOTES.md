@@ -24,3 +24,16 @@
 - Updated Standup File
 - Added Graphics
 - Added a block to md file
+
+# Day 3
+### Roles:
+- Nayan - QA
+- Quint - Lead
+- Gauhar - Scribe
+- Khani - No Role
+
+### Tasks
+- Worked on the boss fight, and lore at the start of the game
+- Updated all README Files
+- Adding Music
+- Updating Graphics
