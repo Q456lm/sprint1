@@ -22,6 +22,7 @@ Top‑Down Puzzle Adventure (Pygame)
   - **Server Room**: decrypt a Caesar‑cipher log by typing the correct phrase.
   - **Botany**: choose which specimen tank is “The Herd”.
   - **Engineering**: toggle couplers into a stable Up/Down pattern.
+  - **BossFight**: After the completion of the puzzles a boss fight will be initiated.
 
 ### How to Run
 Steps
