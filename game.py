@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Echo of Terminal 7 — Surrounded Edition.
+Echo of Terminal 7 — Surrounded Edition (Bugged Version).
 Features:
 - Intro Story Screen.
 - Neon aesthetics, CRT effects, Smooth Physics.
-- ENDING: "The Herd" Swarm Battle (Faster, Shooting, Omni-directional Spawns).
-- Fully implemented Puzzles.
+- ENDING: "The Herd" Swarm Battle.
+- BUGGED Puzzles (Power Grid, Botany, Server Room).
 """
 
 import sys
@@ -385,7 +385,11 @@ class PowerGridPuzzle:
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and not self.resolved and self.failed_timer == 0:
             for name, rect in self.buttons.items():
                 if rect.collidepoint(event.pos):
-                    self.sequence.append(name)
+                    if name == "green":   
+                        self.sequence.append("gren")
+                    else:
+                        self.sequence.append(name)
+                        
                     self.particles.spawn(event.pos[0], event.pos[1], self.colors_map[name])
                     if len(self.sequence) == len(self.ORDER):
                         if self.sequence == self.ORDER: self.resolved = True
@@ -399,7 +403,12 @@ class PowerGridPuzzle:
             draw_text_shadow(surface, self.font, line, C_WHITE, (SCREEN_WIDTH//2, 90 + i*30))
         for name, rect in self.buttons.items():
             color = self.colors_map[name]
-            is_active = name in self.sequence
+            
+            # Note: We check if the name is in sequence, but since we put "gren" 
+            # in the sequence instead of "green", the green button won't light up 
+            # when clicked, adding to the confusion of the bug.
+            is_active = name in self.sequence 
+            
             draw_color = color if is_active or self.resolved else (color[0]//3, color[1]//3, color[2]//3)
             draw_glow_rect(surface, draw_color, rect, glow_radius=15 if is_active else 2)
         
@@ -426,7 +435,7 @@ class ServerRoomPuzzle:
                 if self.input_text.strip().lower() == self.TARGET:
                     self.solved = True
                     self.game_state.herd_secret_known = True
-            elif event.key == pygame.K_BACKSPACE: self.input_text = self.input_text[:-1]
+            
             elif len(self.input_text) < 30 and event.unicode.isprintable(): self.input_text += event.unicode
 
     def draw(self, surface) -> None:
@@ -470,7 +479,7 @@ class BotanyRoom:
         if event.type == pygame.MOUSEBUTTONDOWN and not self.solved:
             for name, rect in self.tanks.items():
                 if rect.collidepoint(event.pos):
-                    if name == "C":
+                    if name == "B": 
                         self.solved = True
                         self.game_state.herd_secret_known = True
                         self.message = "MATCH CONFIRMED: ORGANIZED INTELLIGENCE DETECTED."
@@ -568,10 +577,6 @@ class BossRoom:
         self.intro_timer = 120
 
     def reset(self, player: Player):
-        pygame.mixer.music.stop()
-        pygame.mixer.music.load("1-2_Combat.ogg")
-        pygame.mixer.music.set_volume(0.4)
-        pygame.mixer.music.play(-1, fade_ms = 3000)
         self.swarm = []
         for _ in range(15):
             side = random.randint(0, 3)
@@ -666,12 +671,7 @@ class BossRoom:
             # Win Condition
             if len(self.swarm) == 0:
                 self.state = "win"
-                pygame.mixer.music.fadeout(4000)
 
-            if self.state == "game_over" and not hasattr(self, "music_faded"):
-                pygame.mixer.music.fadeout(3000)
-                self.music_faded = True
-                
     def draw(self, surface: pygame.Surface, player: Player):
         surface.fill((20, 0, 0))
         t = pygame.time.get_ticks() * 0.05
@@ -716,11 +716,11 @@ def main() -> None:
     pygame.init()
     pygame.mixer.init()
 
-    pygame.mixer.music.load("18. The Scrybe of Technology.mp3")
-    pygame.mixer.music.set_volume(0.5)
-    pygame.mixer.music.play(-1)
-
-    pygame.display.set_caption("Echo of Terminal 7 — The Herd Edition")
+    # NOTE: Music loading commented out to prevent crashing if file doesn't exist
+    # pygame.mixer.music.load("18. The Scrybe of Technology.mp3")
+    # pygame.mixer.music.set_volume(0.5)
+    # pygame.mixer.music.play(-1)
+    
     pygame.display.set_caption("Echo of Terminal 7 — Surrounded Edition")
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
@@ -816,4 +816,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
