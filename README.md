@@ -32,9 +32,9 @@ Steps
 
 - Navigate to the folder containing the project files (the folder with game.py).
 
-- Be sure to have Python Installed, visit prerequisites for Python version. 
+- Be sure to have Python installed, visit prerequisites for Python version. 
 
-- You must have pygame installed .
+- You must have pygame installed, visit prerequisites for installation process.
 - Install Pygame (once):
 
 ```bash
