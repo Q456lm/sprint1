@@ -568,6 +568,10 @@ class BossRoom:
         self.intro_timer = 120
 
     def reset(self, player: Player):
+        pygame.mixer.music.stop()
+        pygame.mixer.music.load("1-2_Combat.ogg")
+        pygame.mixer.music.set_volume(0.4)
+        pygame.mixer.music.play(-1, fade_ms = 3000)
         self.swarm = []
         for _ in range(15):
             side = random.randint(0, 3)
@@ -662,7 +666,12 @@ class BossRoom:
             # Win Condition
             if len(self.swarm) == 0:
                 self.state = "win"
+                pygame.mixer.music.fadeout(4000)
 
+            if self.state == "game_over" and not hasattr(self, "music_faded"):
+                pygame.mixer.music.fadeout(3000)
+                self.music_faded = True
+                
     def draw(self, surface: pygame.Surface, player: Player):
         surface.fill((20, 0, 0))
         t = pygame.time.get_ticks() * 0.05
@@ -710,6 +719,7 @@ def main() -> None:
     pygame.mixer.music.load("18. The Scrybe of Technology.mp3")
     pygame.mixer.music.set_volume(0.5)
     pygame.mixer.music.play(-1)
+
     pygame.display.set_caption("Echo of Terminal 7 — The Herd Edition")
     pygame.display.set_caption("Echo of Terminal 7 — Surrounded Edition")
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -806,3 +816,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
