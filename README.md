@@ -31,33 +31,24 @@ Steps
 - Open a terminal or command prompt.
 
 - Navigate to the folder containing the project files (the folder with game.py).
-  
-- You must have pygame installed .Run the game by typing: python game.py
-  (On macOS/Linux, use: python3 game.py)
+
+- Be sure to have Python Installed, visit prerequisites for Python version. 
+
+- You must have pygame installed .
+- Install Pygame (once):
+
+```bash
+ python -m pip install pygame-ce
+```
+(On macOS/Linux, use: python3 game.py)
+
+- Run the game by typing: python game.py
 
 - A window titled “Echo of Terminal 7 — Pygame Prototype” should open.
 #### Prerequisites
 - Python 3.8+  
 - `pygame` 2.x  
 
-Install Pygame (once):
-
-```bash
- python -m pip install pygame-ce
-```
-
-#### Steps
-1. Clone or download this repo.  
-2. Open a terminal / command prompt.  
-3. Navigate to the repo folder:
-   ```bash
-   cd path/to/sprint1
-   ```
-4. Run the game:
-   ```bash
-   python game.py
-   ```
-5. Use the on‑screen instructions and controls listed below to play.
 
 ### Example Play Session
 
