@@ -168,8 +168,8 @@ You see the **Central Hub** with three labeled doors and a power console.
 
 #### Development Timeline (Week 5)
 - **Day 1**: Story + mechanic spec (hub + three rooms + puzzles).  
-- **Day 2–4**: Implemented movement, hub, and all room puzzles in Pygame.  
-- **Day 5**: Refactoring, commenting, and README / documentation polish.  
+- **Day 2–3**: Implemented movement, hub, and all room puzzles in Pygame.  
+- **Day 4**: Refactoring, commenting, and README / documentation polish.  
 
 #### Lessons Learned
 - Managing **game modes** (`hub`, `power_puzzle`, `server`, `botany`, `engineering`) with a single loop keeps logic simple but requires careful input routing.  
