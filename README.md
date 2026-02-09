@@ -40,10 +40,9 @@ Steps
 ```bash
  python -m pip install pygame-ce
 ```
-(On macOS/Linux, use: python3 game.py)
 
 - Run the game by typing: python game.py
-
+(On macOS/Linux, use: python3 game.py)
 - A window titled “Echo of Terminal 7 — Pygame Prototype” should open.
 #### Prerequisites
 - Python 3.8+  
