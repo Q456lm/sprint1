@@ -121,9 +121,6 @@ You see the **Central Hub** with three labeled doors and a power console.
   - *What happens*: Running `python game.py` without Pygame installed raises an `ImportError`.  
   - *Severity*: High for first‑time setup, but fixed by installing Pygame (`pip install pygame`).  
 
-- **[Bug 2]: No explicit “You escaped” end screen yet**  
-  - *What happens*: Even after solving puzzles, the game doesn’t switch to a final win screen; the player just returns to the hub.  
-  - *Severity*: Medium; core puzzles work but narrative payoff is incomplete.
 
 #### Incomplete Features
 - **Final Escape Sequence** — Planned: when `power_restored`, `herd_secret_known`, and `slip_repaired` are all true, trigger a Slip‑Drive escape scene and credits.  
@@ -170,9 +167,9 @@ You see the **Central Hub** with three labeled doors and a power console.
 - `pygame` 2.x  
 
 #### Development Timeline (Week 5)
-- **Day 21**: Story + mechanic spec (hub + three rooms + puzzles).  
-- **Day 22–24**: Implemented movement, hub, and all room puzzles in Pygame.  
-- **Day 25**: Refactoring, commenting, and README / documentation polish.  
+- **Day 1**: Story + mechanic spec (hub + three rooms + puzzles).  
+- **Day 2–4**: Implemented movement, hub, and all room puzzles in Pygame.  
+- **Day 5**: Refactoring, commenting, and README / documentation polish.  
 
 #### Lessons Learned
 - Managing **game modes** (`hub`, `power_puzzle`, `server`, `botany`, `engineering`) with a single loop keeps logic simple but requires careful input routing.  
