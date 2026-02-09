@@ -32,8 +32,14 @@
 - Gauhar - Scribe
 - Khani - No Role
 
+- # Day 4
+### Roles:
+- Nayan - 
+- Quint - Scribe
+- Gauhar - QA
+- Khani - Lead
+
 ### Tasks
-- Worked on the boss fight, and lore at the start of the game
-- Updated all README Files
-- Adding Music
-- Updating Graphics
+- Finished README files
+- Created and Finished Bug File
+- Added Comments
