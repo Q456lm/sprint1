@@ -6,10 +6,10 @@
 - Gauhar - No Role
 
 ### Tasks
-- Set up roles
-- Story Line Done
-- Created GitHub and all files
-- Created Spec Sheet
+- Set up roles - Everyone
+- Story Line Done - Everyone
+- Created GitHub and all files - Quint
+- Created Spec Sheet - Nayan
 
 # Day 2
 ### Roles: 
@@ -19,11 +19,11 @@
 - Gauhar - Lead
 
 ### Tasks
-- Worked on base game and core functionalities
-- Worked on README file
-- Updated Standup File
-- Added Graphics
-- Added a block to md file
+- Worked on base game and core functionalities - Everyone coded
+- Worked on README file - Gauhar
+- Updated Standup File - Nayan
+- Added Graphics - Khani
+- Added a block to md file - Quint
 
 # Day 3
 ### Roles:
@@ -32,14 +32,18 @@
 - Gauhar - Scribe
 - Khani - No Role
 
+### Tasks
+- Full code day (Everyone had to code and work on the game)
+
 - # Day 4
 ### Roles:
-- Nayan - 
+- Nayan - No Role
 - Quint - Scribe
 - Gauhar - QA
 - Khani - Lead
 
 ### Tasks
-- Finished README files
-- Created and Finished Bug File
-- Added Comments
+- Finished README files - Gauhar and Nayan
+- Created and Finished Bug File - Quint
+- Added Comments - Nayan
+- Added Music - Khani
