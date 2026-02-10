@@ -16,4 +16,4 @@
   2. Inspect the three containment tanks (A, B, C).
   3. Attempt to identify the "Organized Intelligence" pattern.
   4. Note that the tanks appear empty despite the simulation code running.
-- **Status:** Not fixed
+- **Status:** Fixed
