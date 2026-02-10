@@ -1,0 +1,5 @@
+Echo of Terminal 7 is a top-down sci-fi shooter where players navigate a hub to solve four distinct logic puzzles—ranging from pattern recognition to code decryption—before unlocking a final boss fight. 
+The game utilizes vector-based physics for fluid player movement and a custom particle system to create dynamic visual effects during combat.
+
+Although the primary game loop and boss encounter are fully playable, time constraints limited the scale of the map. 
+We were unable to implement additional exploration zones or expand the variety of puzzle mechanics beyond the initial set provided in the central hub.
