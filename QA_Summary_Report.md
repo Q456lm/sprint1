@@ -22,10 +22,10 @@ What We Tested:
 - State management ✓
 - Complex scenarios & sequences ✓
 # Coverage Summary
-Features Tested: [List core features and % coverage]
-Feature 1: 100% tested
-Feature 2: 80% tested
-Feature 3: Not tested (reason)
+- Features Tested: [List core features and % coverage]  
+Feature 1: 100% tested  
+Feature 2: 80% tested  
+Feature 3: Not tested (reason)  
 Test Types: [Types of testing we did]
 Functional testing (does it work?)
 Negative testing (what breaks it?)
