@@ -489,7 +489,7 @@ class PowerGridPuzzle:
         draw_text_shadow(surface, self.font, "POWER GRID CALIBRATION", C_NEON_CYAN, (SCREEN_WIDTH//2, 40))
         
         # Riddle / Hints
-        riddle = ['"The sky comes before the sun...', '...but the grass must never touch the blood.', 'The sun is not last."']
+        riddle = ['"First, the sky clears for the sun,', 'the sun feeds the growing grass,', 'and the grass hides the blood."']
         for i, line in enumerate(riddle):
             draw_text_shadow(surface, self.font, line, C_WHITE, (SCREEN_WIDTH//2, 90 + i*30))
         
