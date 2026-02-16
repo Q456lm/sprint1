@@ -6,7 +6,7 @@ GAME OVERVIEW:
 This is a Top-Down Sci-Fi Shooter/Puzzle game built with Pygame.
 The player must explore a hub, solve three distinct puzzles to unlock
 the boss room, and survive a swarm battle.
-
+awasd
 KEY SYSTEMS:
 1. State Machine: The game switches modes between 'hub', 'puzzles', and 'boss'.
 2. Vector Physics: Movement uses acceleration and friction for a smooth feel.
@@ -586,7 +586,7 @@ class BotanyRoom:
         if event.type == pygame.MOUSEBUTTONDOWN and not self.solved:
             for name, rect in self.tanks.items():
                 if rect.collidepoint(event.pos):
-                    if name == "B": 
+                    if name == "C": 
                         self.solved = True
                         self.game_state.herd_secret_known = True # Note: Both server and botany trigger this flag
                         self.message = "MATCH CONFIRMED: ORGANIZED INTELLIGENCE DETECTED."
