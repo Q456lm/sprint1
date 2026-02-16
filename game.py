@@ -588,7 +588,7 @@ class BotanyRoom:
                 if rect.collidepoint(event.pos):
                     if name == "C": 
                         self.solved = True
-                        self.game_state.herd_secret_known = True # Note: Both server and botany trigger this flag
+                        self.game_state.botany_analyzed = True # Note: Both server and botany trigger this flag
                         self.message = "MATCH CONFIRMED: ORGANIZED INTELLIGENCE DETECTED."
                         self.particles.spawn(rect.centerx, rect.centery, C_NEON_GREEN, 30)
                     else:
