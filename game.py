@@ -314,13 +314,13 @@ class GameState:
         self.power_restored = False
         self.herd_secret_known = False
         self.slip_repaired = False
+        self.botany_analyzed = False
         self.boss_unlocked = False
         self.particles = ParticleSystem()
     
     def check_all_puzzles(self):
-        if self.power_restored and self.herd_secret_known and self.slip_repaired:
+        if (self.power_restored and self.herd_secret_known and self.slip_repaired and self.botany_analyzed):
             self.boss_unlocked = True
-
 class Player:
     def __init__(self, x: int, y: int) -> None:
         self.pos = pygame.math.Vector2(x, y)
