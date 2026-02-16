@@ -541,7 +541,7 @@ class ServerRoomPuzzle:
         
         # Display the clue (ROT-3 means shift letters by 3, but the hint says ROT-3)
         # "Wkhy duh lq wkh khug" -> shift -3 -> "They are in the herd"
-        lines = ["ADMIN_CONSOLE_V7.2", "LOG_ENCRYPTED [ROT-3]", 'RAW: "Wkhy duh lq wkh khug."', ""]
+        lines = ["ADMIN_CONSOLE_V7.2", "LOG_ENCRYPTED [ROT-3]", 'RAW: "Wkhy duh lq wkh khug"', ""]
         y = 100
         for l in lines:
             surface.blit(self.font.render(l, True, C_NEON_GREEN), (120, y))
