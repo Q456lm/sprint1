@@ -473,7 +473,7 @@ class PowerGridPuzzle:
             for name, rect in self.buttons.items():
                 if rect.collidepoint(event.pos):
                     if name == "green":   
-                        self.sequence.append("gren") 
+                        self.sequence.append("green") 
                     else:
                         self.sequence.append(name)
                         
