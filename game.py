@@ -898,24 +898,23 @@ def main() -> None:
             # Global Key Handling (State Switching)
             elif mode == "intro":
                 if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                    now = pygame.time.get_ticks()
-                    # ignore rapid inputs (prevents accidental double-click from both skipping and starting)
-                    if now - intro_screen.last_input_time < intro_screen.input_cooldown_ms:
-                        # drop this input
-                        continue
-
-                    # First input: fast-forward the intro text (don't start the game yet).
-                    if not intro_screen.finished:
-                        intro_screen.finished = True
-                        # reveal all lines immediately
-                        intro_screen.current_line_idx = len(intro_screen.lines) - 1
-                        intro_screen.char_idx = len(intro_screen.lines[-1])
-                        intro_screen.last_input_time = now
-                    else:
-                        # Second input: actually start the game
+                    mode = "hub" 
             
-                        mode = "hub"
-                        intro_screen.last_input_time = now
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                if mode == "hub": running = False
+                elif mode == "boss_room" and boss_room.state == "game_over":
+                    boss_room.reset(player) # Restart boss
+                else: 
+                    # Return to hub from puzzle
+                    if mode != "boss_room": game_state.check_all_puzzles()
+                    mode = "hub"
+            else:
+                # Delegate events to specific rooms
+                if mode == "power_puzzle": power_puzzle.handle_event(event)
+                elif mode == "server": server_puzzle.handle_event(event)
+                elif mode == "botany": botany_room.handle_event(event)
+                elif mode == "engineering": engineering_room.handle_event(event)
+                elif mode == "boss_room": boss_room.handle_event(event, player)
 
         # Update & Draw Logic based on Mode
         if mode == "intro":
