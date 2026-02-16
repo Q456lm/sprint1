@@ -861,8 +861,8 @@ def main() -> None:
     pygame.display.set_caption("Echo of Terminal 7 — Surrounded Edition")
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     clock = pygame.time.Clock()
-    font = pygame.font.SysFont("arial", 18, bold=True)
-    mono_font = pygame.font.SysFont("consolas", 20) 
+    font = pygame.font.Font(None, 22) 
+    mono_font = pygame.font.Font(None, 24) 
 
     # Initialize State Objects
     game_state = GameState()
