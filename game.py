@@ -314,13 +314,13 @@ class GameState:
         self.power_restored = False
         self.herd_secret_known = False
         self.slip_repaired = False
+        self.botany_analyzed = False
         self.boss_unlocked = False
         self.particles = ParticleSystem()
     
     def check_all_puzzles(self):
-        if self.power_restored and self.herd_secret_known and self.slip_repaired:
+        if (self.power_restored and self.herd_secret_known and self.slip_repaired and self.botany_analyzed):
             self.boss_unlocked = True
-
 class Player:
     def __init__(self, x: int, y: int) -> None:
         self.pos = pygame.math.Vector2(x, y)
@@ -473,7 +473,7 @@ class PowerGridPuzzle:
             for name, rect in self.buttons.items():
                 if rect.collidepoint(event.pos):
                     if name == "green":   
-                        self.sequence.append("gren") 
+                        self.sequence.append("green") 
                     else:
                         self.sequence.append(name)
                         
@@ -541,7 +541,7 @@ class ServerRoomPuzzle:
         
         # Display the clue (ROT-3 means shift letters by 3, but the hint says ROT-3)
         # "Wkhy duh lq wkh khug" -> shift -3 -> "They are in the herd"
-        lines = ["ADMIN_CONSOLE_V7.2", "LOG_ENCRYPTED [ROT-3]", 'RAW: "Wkhy duh lq wkh khug."', ""]
+        lines = ["ADMIN_CONSOLE_V7.2", "LOG_ENCRYPTED [ROT-3]", 'RAW: "Wkhy duh lq wkh khug"', ""]
         y = 100
         for l in lines:
             surface.blit(self.font.render(l, True, C_NEON_GREEN), (120, y))
