@@ -173,6 +173,9 @@ class IntroScreen:
         self.timer = 0
         self.speed = 2 # Lower is faster typing
         self.finished = False
+        # input cooldown (ms) to prevent accidental double-press advancing immediately
+        self.input_cooldown_ms = 250
+        self.last_input_time = 0
 
     def update(self):
         if not self.finished:
@@ -898,8 +901,26 @@ def main() -> None:
             # Global Key Handling (State Switching)
             elif mode == "intro":
                 if event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
-                    mode = "hub" 
-            
+                    now = pygame.time.get_ticks()
+
+                    # If intro not finished: first input fast-forwards text only
+                    if not intro_screen.finished:
+                        intro_screen.finished = True
+                        intro_screen.current_line_idx = len(intro_screen.lines) - 1
+                        intro_screen.char_idx = len(intro_screen.lines[-1])
+                        # set last input time so an accidental second event is ignored briefly
+                        intro_screen.last_input_time = now
+                        # do NOT change mode yet — wait for second input to actually start
+                    else:
+                        # intro already finished -> require a second confirmed input to start
+                        cooldown = getattr(intro_screen, 'input_cooldown_ms', 250)
+                        if now - getattr(intro_screen, 'last_input_time', 0) >= cooldown:
+                            mode = "hub"
+                            intro_screen.last_input_time = now
+                        else:
+                            # ignore inputs that occur too fast after the skip
+                            continue
+
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
                 if mode == "hub": running = False
                 elif mode == "boss_room" and boss_room.state == "game_over":
