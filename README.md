@@ -190,3 +190,4 @@ Ask **Nayan Patel** or check `STANDUP_NOTES.md` for ongoing context and decision
 - Adding botany analysis check for boss unlock specifically
 - Fixed the "green" mispelling so the correct button would toggle
 - Fixed botany room bug where B and A were inputted as right answers, fixed it to C.
+- Fixed font not appearing bug on macOS 
