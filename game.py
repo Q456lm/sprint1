@@ -844,13 +844,14 @@ class BossRoom:
 def draw_crt_overlay(surface):
     """Draws scanlines and a vignette to simulate an old monitor."""
     for y in range(0, SCREEN_HEIGHT, 4):
-        pygame.draw.line(surface, (0, 0, 0, 100), (0, y), (SCREEN_WIDTH, y))
+        pygame.draw.line(surface, (0, 0, 0), (0, y), (SCREEN_WIDTH, y))
     vig = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
     pygame.draw.rect(vig, (0,0,0,100), (0,0,SCREEN_WIDTH, SCREEN_HEIGHT), 20)
     surface.blit(vig, (0,0))
 
 def main() -> None:
     pygame.init()
+    pygame.font.init()
     pygame.mixer.init()
 
     # Load BGM - Ensure these files exist or comment them out
@@ -866,7 +867,7 @@ def main() -> None:
     clock = pygame.time.Clock()
     # Provide Mac-friendly fallbacks (Helvetica for Arial, Monaco/Menlo for Consolas)
     font = pygame.font.SysFont("arial,helvetica,sans", 18, bold=True)
-    mono_font = pygame.font.SysFont("consolas,monaco,menlo,courier", 20) 
+    mono_font = pygame.font.SysFont(None, 20)
 
     # Initialize State Objects
     game_state = GameState()
@@ -974,8 +975,8 @@ def main() -> None:
             game_state.particles.update_and_draw(canvas)
         
         # Final Render to Screen with CRT Filter
+        draw_crt_overlay(canvas)     # <-- apply CRT to canvas
         screen.blit(canvas, (0,0))
-        draw_crt_overlay(screen)
         pygame.display.flip()
         clock.tick(FPS)
 
