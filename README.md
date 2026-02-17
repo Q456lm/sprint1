@@ -183,3 +183,10 @@ Questions about this game?
 Ask **Nayan Patel** or check `STANDUP_NOTES.md` for ongoing context and decisions.
 
 
+### Bugs Fixed (Week 2)
+- Implemented input cooldown for introduction screen: Does not automatically send you to game after an input.
+- Updating game states for all four rooms in order to correctly activate the boss.
+- Fixing riddle to match the puzzle of Power Grid so it's not confusing
+- Adding botany analysis check for boss unlock specifically
+- Fixed the "green" mispelling so the correct button would toggle
+- Fixed botany room bug where B and A were inputted as right answers, fixed it to C.
